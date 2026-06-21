@@ -2,10 +2,15 @@
 {% block title %}队列状态 - Obsidian AI Clipper{% endblock %}
 {% block content %}
 <h1>队列状态</h1>
-<table>
-  <tr><th>状态</th><th>数量</th></tr>
-  <tr><td>等待中</td><td>{{ pending }}</td></tr>
-  <tr><td>抓取中</td><td>{{ fetching }}</td></tr>
-</table>
-<p><a href="/web">返回列表</a></p>
+<div style="display:flex;gap:1.5rem;flex-wrap:wrap;margin-bottom:1.5rem;">
+  <div style="background:var(--card-bg);border-radius:8px;padding:1.5rem 2rem;box-shadow:var(--shadow);min-width:140px;text-align:center;">
+    <div style="font-size:2rem;font-weight:700;color:var(--warning);">{{ pending }}</div>
+    <div style="font-size:0.85rem;color:var(--text-secondary);margin-top:0.25rem;">等待中</div>
+  </div>
+  <div style="background:var(--card-bg);border-radius:8px;padding:1.5rem 2rem;box-shadow:var(--shadow);min-width:140px;text-align:center;">
+    <div style="font-size:2rem;font-weight:700;color:var(--accent);">{{ fetching }}</div>
+    <div style="font-size:0.85rem;color:var(--text-secondary);margin-top:0.25rem;">抓取中</div>
+  </div>
+</div>
+<a href="/web" class="back-link">&larr; 返回列表</a>
 {% endblock %}

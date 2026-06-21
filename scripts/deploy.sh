@@ -20,10 +20,16 @@ if [ -f /etc/os-release ]; then
     echo "[*] Detected OS: $NAME $VERSION"
 fi
 
-# ---- Prompt for sensitive values ----
+# ---- Generate secure API key ----
 echo ""
 echo "--- Configuration ---"
-read -rp "API Key for Chrome extension (comma-separated, e.g. key1,key2): " API_KEYS_INPUT
+
+API_KEY_GENERATED=$(python3 -c "import secrets; print(secrets.token_urlsafe(32))" 2>/dev/null || openssl rand -base64 32 2>/dev/null || cat /proc/sys/kernel/random/uuid 2>/dev/null)
+echo "[*] Auto-generated API Key for Chrome extension:"
+echo "    ${API_KEY_GENERATED}"
+echo "    (Save this key — you will need it for the Chrome extension.)"
+echo ""
+
 read -rp "Kimi Code API Key: " KIMI_API_KEY_INPUT
 read -rp "Kimi Base URL [https://api.kimi.com/coding/v1]: " KIMI_BASE_URL_INPUT
 read -rp "Kimi Model [kimi-for-coding]: " KIMI_MODEL_INPUT
@@ -32,7 +38,7 @@ read -rp "Database path on host [$(pwd)/data/clipper.db]: " DATABASE_PATH_INPUT
 read -rp "Domain for HTTPS (leave blank to skip Let's Encrypt): " DOMAIN_INPUT
 read -rp "Email for Let's Encrypt (leave blank to skip): " EMAIL_INPUT
 
-API_KEYS="${API_KEYS_INPUT:-change-me}"
+API_KEYS="${API_KEY_GENERATED}"
 KIMI_API_KEY="${KIMI_API_KEY_INPUT:-sk-xxx}"
 KIMI_BASE_URL="${KIMI_BASE_URL_INPUT:-https://api.kimi.com/coding/v1}"
 KIMI_MODEL="${KIMI_MODEL_INPUT:-kimi-for-coding}"

@@ -2,16 +2,30 @@
 {% block title %}失败任务 - Obsidian AI Clipper{% endblock %}
 {% block content %}
 <h1>失败任务</h1>
+{% if jobs %}
 <table>
-  <tr><th>标题</th><th>状态</th><th>错误</th><th>时间</th></tr>
+  <tr>
+    <th>URL</th>
+    <th>状态</th>
+    <th>错误信息</th>
+    <th>时间</th>
+  </tr>
   {% for job in jobs %}
   <tr>
-    <td><a href="/web/clips/{{ job.id }}">{{ job.url }}</a></td>
-    <td>{{ job.status }}</td>
-    <td>{{ job.last_error or '-' }}</td>
-    <td>{{ job.created_at }}</td>
+    <td>
+      <a href="/web/clips/{{ job.id }}" class="clip-url" title="{{ job.url }}">{{ job.url }}</a>
+    </td>
+    <td><span class="badge badge-failed">失败</span></td>
+    <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:0.82rem;" title="{{ job.last_error or '' }}">{{ job.last_error or '—' }}</td>
+    <td style="font-size:0.82rem;color:var(--text-secondary);white-space:nowrap;">{{ job.created_at }}</td>
   </tr>
   {% endfor %}
 </table>
-<p><a href="/web">返回列表</a></p>
+{% else %}
+<div class="empty-state">
+  <p style="font-size:1.1rem;margin-bottom:0.5rem;">无失败任务</p>
+  <p style="font-size:0.85rem;">一切运行正常</p>
+</div>
+{% endif %}
+<a href="/web" class="back-link">&larr; 返回列表</a>
 {% endblock %}

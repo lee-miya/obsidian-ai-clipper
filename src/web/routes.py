@@ -21,7 +21,7 @@ async def startup():
 async def list_clips(request: Request):
     jobs = await store.list_jobs(limit=100)
     return templates.TemplateResponse(
-        request=request, name="list.html", context={"jobs": jobs}
+        request=request, name="list.html", context={"jobs": jobs, "active_page": "list"}
     )
 
 
@@ -39,7 +39,7 @@ async def clip_detail(request: Request, job_id: str):
 async def failed_clips(request: Request):
     jobs = await store.list_failed_jobs()
     return templates.TemplateResponse(
-        request=request, name="failed.html", context={"jobs": jobs}
+        request=request, name="failed.html", context={"jobs": jobs, "active_page": "failed"}
     )
 
 
@@ -48,5 +48,5 @@ async def queue_status(request: Request):
     pending = await store.list_jobs(status=JobStatus.PENDING)
     fetching = await store.list_jobs(status=JobStatus.FETCHING)
     return templates.TemplateResponse(
-        request=request, name="queue.html", context={"pending": len(pending), "fetching": len(fetching)}
+        request=request, name="queue.html", context={"pending": len(pending), "fetching": len(fetching), "active_page": "queue"}
     )
