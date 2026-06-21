@@ -1,0 +1,12 @@
+services:
+  clipper:
+    build: .
+    container_name: obsidian-ai-clipper
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    volumes:
+      - ${VAULT_PATH}:/data/vault
+      - ./data:/data
+    restart: unless-stopped
