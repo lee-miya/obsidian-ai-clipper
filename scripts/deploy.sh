@@ -38,6 +38,15 @@ read -rp "Database path on host [$(pwd)/data/clipper.db]: " DATABASE_PATH_INPUT
 read -rp "Domain for HTTPS (leave blank to skip Let's Encrypt): " DOMAIN_INPUT
 read -rp "Email for Let's Encrypt (leave blank to skip): " EMAIL_INPUT
 
+# ---- p12 certificate support ----
+if [ -n "$DOMAIN_INPUT" ]; then
+    read -rp "Do you want to export Let's Encrypt certificates to p12/PFX format? (y/N): " EXPORT_P12
+    if [ "$EXPORT_P12" = "y" ] || [ "$EXPORT_P12" = "Y" ]; then
+        read -rsp "Set a password for the p12 file: " P12_PASSWORD
+        echo ""
+    fi
+fi
+
 API_KEYS="${API_KEY_GENERATED}"
 KIMI_API_KEY="${KIMI_API_KEY_INPUT:-sk-xxx}"
 KIMI_BASE_URL="${KIMI_BASE_URL_INPUT:-https://api.kimi.com/coding/v1}"
@@ -124,6 +133,22 @@ services:
       - "traefik.http.routers.clipper.tls.certresolver=letsencrypt"
     restart: unless-stopped
 COMPOSE_EOF
+
+    # ---- p12 export hint ----
+    if [ "${EXPORT_P12:-n}" = "y" ] || [ "${EXPORT_P12:-n}" = "Y" ]; then
+        cat >> "$PROJECT_DIR/p12-export-guide.txt" << P12EOF
+========================================
+p12 Certificate Export Instructions
+========================================
+After docker-compose starts and Traefik obtains Let's Encrypt certificates (check: docker compose logs traefik | grep "Certificates"), extract the Traefik acme.json:
+
+1. Install jq: dnf install -y jq
+2. Extract certs from ./letsencrypt/acme.json using: https://github.com/containous/traefik-certs-dumper
+3. Convert to p12:
+   openssl pkcs12 -export -in fullchain.pem -inkey privkey.pem -out cert.p12 -passout pass:${P12_PASSWORD}
+P12EOF
+        echo "[*] p12 export instructions saved to: p12-export-guide.txt"
+    fi
 else
     echo "  HTTPS not configured — running on port 8000 only."
     cat > docker-compose.yml << COMPOSE_EOF
