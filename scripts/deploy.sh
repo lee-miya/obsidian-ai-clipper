@@ -35,6 +35,13 @@ read -rp "Kimi Base URL [https://api.kimi.com/coding/v1]: " KIMI_BASE_URL_INPUT
 read -rp "Kimi Model [kimi-for-coding]: " KIMI_MODEL_INPUT
 read -rp "Vault path on host [$(pwd)/vault]: " VAULT_PATH_INPUT
 read -rp "Database path on host [$(pwd)/data/clipper.db]: " DATABASE_PATH_INPUT
+# ---- Let's Encrypt pre-check ----
+echo ""
+echo "--- Let's Encrypt ---"
+echo "[*] If you provide a domain and email, Traefik will automatically obtain and renew Let's Encrypt TLS certificates."
+echo "[*] Requirements: The domain must have a DNS A record pointing to this server's public IP, and port 443 must be reachable."
+echo ""
+
 read -rp "Domain for HTTPS (leave blank to skip Let's Encrypt): " DOMAIN_INPUT
 read -rp "Email for Let's Encrypt (leave blank to skip): " EMAIL_INPUT
 
@@ -96,6 +103,16 @@ echo "  .env written (permissions: 600)."
 # ---- Docker Compose setup ----
 echo ""
 echo "[4/6] Configuring Docker Compose..."
+
+if [ -n "$DOMAIN_INPUT" ]; then
+    if [ -n "$EMAIL_INPUT" ]; then
+        echo "  HTTPS enabled via Traefik + Let's Encrypt for domain: $DOMAIN_INPUT"
+        echo "  Traefik will automatically request TLS certificates from Let's Encrypt on first startup."
+    else
+        echo "  WARNING: Domain provided but no email — skipping Let's Encrypt. Using domain setup without TLS."
+        DOMAIN_INPUT=""
+    fi
+fi
 
 if [ -n "$DOMAIN_INPUT" ] && [ -n "$EMAIL_INPUT" ]; then
     echo "  HTTPS enabled via Traefik + Let's Encrypt for domain: $DOMAIN_INPUT"
