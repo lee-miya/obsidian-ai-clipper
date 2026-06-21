@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}{{ job.url }} - Obsidian AI Clipper{% endblock %}
+{% block content %}
+<h1>剪藏详情</h1>
+<table>
+  <tr><th>ID</th><td>{{ job.id }}</td></tr>
+  <tr><th>URL</th><td>{{ job.url }}</td></tr>
+  <tr><th>状态</th><td>{{ job.status }}</td></tr>
+  <tr><th>阶段</th><td>{{ job.stage or '-' }}</td></tr>
+  <tr><th>重试次数</th><td>{{ job.retry_count }} / {{ job.max_retries }}</td></tr>
+  <tr><th>Vault 路径</th><td>{{ job.vault_path or '-' }}</td></tr>
+  <tr><th>错误信息</th><td>{{ job.last_error or '-' }}</td></tr>
+  <tr><th>创建时间</th><td>{{ job.created_at }}</td></tr>
+  <tr><th>更新时间</th><td>{{ job.updated_at }}</td></tr>
+</table>
+<p><a href="/web">返回列表</a></p>
+{% endblock %}

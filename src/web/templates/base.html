@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Obsidian AI Clipper{% endblock %}</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
+    nav a { margin-right: 1rem; }
+    table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    th, td { border: 1px solid #ccc; padding: 0.5rem; text-align: left; }
+    .tag { background: #eee; padding: 0.1rem 0.4rem; border-radius: 0.2rem; margin-right: 0.3rem; font-size: 0.85rem; }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="/web">剪藏列表</a>
+    <a href="/web/failed">失败任务</a>
+    <a href="/web/queue">队列</a>
+  </nav>
+  {% block content %}{% endblock %}
+</body>
+</html>

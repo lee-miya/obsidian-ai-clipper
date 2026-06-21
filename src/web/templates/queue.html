@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}队列状态 - Obsidian AI Clipper{% endblock %}
+{% block content %}
+<h1>队列状态</h1>
+<table>
+  <tr><th>状态</th><th>数量</th></tr>
+  <tr><td>等待中</td><td>{{ pending }}</td></tr>
+  <tr><td>抓取中</td><td>{{ fetching }}</td></tr>
+</table>
+<p><a href="/web">返回列表</a></p>
+{% endblock %}
