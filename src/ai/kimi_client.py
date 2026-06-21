@@ -33,6 +33,7 @@ class KimiClient:
         headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json",
+            "User-Agent": "claude-cli/2.1.161",
         }
 
         async with httpx.AsyncClient(timeout=180.0) as client:
