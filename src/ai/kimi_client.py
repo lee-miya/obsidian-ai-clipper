@@ -2,8 +2,11 @@ import json
 import httpx
 from src.extractor.extractor import ExtractedContent
 
+class KimiAPIError(Exception):
+    pass
+
 class KimiClient:
-    def __init__(self, api_key: str, model: str = "kimi2.6"):
+    def __init__(self, api_key: str, model: str = "kimi-k2.6"):
         self.api_key = api_key
         self.model = model
         self.base_url = "https://api.moonshot.cn/v1"
@@ -25,16 +28,41 @@ class KimiClient:
                     "code_blocks": content.code_blocks,
                 }, ensure_ascii=False)},
             ],
-            "response_format": {"type": "json_object"},
+        }
+
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json",
         }
 
         async with httpx.AsyncClient(timeout=180.0) as client:
-            response = await client.post(
-                f"{self.base_url}/chat/completions",
-                headers={"Authorization": f"Bearer {self.api_key}"},
-                json=payload,
-            )
-            response.raise_for_status()
-            data = response.json()
-            raw = data["choices"][0]["message"]["content"]
-            return json.loads(raw)
+            for attempt in range(3):
+                try:
+                    response = await client.post(
+                        f"{self.base_url}/chat/completions",
+                        headers=headers,
+                        json=payload,
+                    )
+                    response.raise_for_status()
+                    data = response.json()
+                    raw = data["choices"][0]["message"]["content"]
+                    try:
+                        return json.loads(raw)
+                    except json.JSONDecodeError:
+                        # Try to extract JSON from markdown fences
+                        stripped = raw.strip()
+                        if stripped.startswith("```"):
+                            # Extract content between fences
+                            lines = stripped.splitlines()
+                            if lines[0].startswith("```"):
+                                lines = lines[1:]
+                            if lines and lines[-1].startswith("```"):
+                                lines = lines[:-1]
+                            stripped = "\n".join(lines).strip()
+                            return json.loads(stripped)
+                        raise KimiAPIError(f"Invalid JSON response from Kimi API: {raw[:200]}")
+                except (httpx.HTTPStatusError, httpx.RequestError) as exc:
+                    if attempt == 2:
+                        raise KimiAPIError(f"Kimi API request failed after 3 retries: {exc}") from exc
+                    await __import__('asyncio').sleep(2 ** attempt)
+            return {}

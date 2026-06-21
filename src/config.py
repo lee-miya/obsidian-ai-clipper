@@ -20,7 +20,7 @@ class Settings(BaseSettings):
 
     api_keys: list[str]
     kimi_api_key: str
-    kimi_model: str = "kimi2.6"
+    kimi_model: str = "kimi-k2.6"
     vault_path: str = "/data/vault"
     database_path: str = "/data/clipper.db"
     log_level: str = "INFO"
