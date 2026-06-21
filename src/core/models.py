@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic import BaseModel, ConfigDict, Field, HttpUrl
 
 class JobStatus(str, Enum):
     PENDING = "pending"
@@ -24,8 +24,11 @@ class ClipResponse(BaseModel):
     message: str = "已接收，正在后台处理"
 
 class JobResponse(BaseModel):
-    job_id: str
-    status: JobStatus
+    model_config = ConfigDict(extra='allow')
+
+    job_id: str | None = None
+    id: str | None = None
+    status: JobStatus | None = None
     stage: str | None = None
     retry_count: int = 0
     vault_path: str | None = None
