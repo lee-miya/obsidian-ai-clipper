@@ -60,6 +60,8 @@ async def process_job(job_id: str, store: JobStore):
             try:
                 ai_result = await client.process(extracted, url=url)
                 break
+            except asyncio.CancelledError:
+                raise
             except Exception as e:
                 last_error = str(e)
                 await asyncio.sleep(2 ** attempt)
@@ -73,12 +75,18 @@ async def process_job(job_id: str, store: JobStore):
                 "author": extracted.author,
                 "published_at": extracted.published_at,
             }
+            last_error = last_error or "AI processing failed after all retries"
 
         await store.update_status(job_id, JobStatus.SAVING, stage="saving")
         vault_path = await save_clip(job_id, url, ai_result, extracted, settings.vault_path)
 
-        await store.update_status(job_id, JobStatus.DONE, stage="done", vault_path=str(vault_path))
+        if last_error:
+            await store.update_status(job_id, JobStatus.NEEDS_REVIEW, stage="done", vault_path=str(vault_path), last_error=last_error)
+        else:
+            await store.update_status(job_id, JobStatus.DONE, stage="done", vault_path=str(vault_path))
 
+    except asyncio.CancelledError:
+        raise
     except Exception as e:
         retry_count = job["retry_count"] + 1
         if retry_count < job["max_retries"]:
