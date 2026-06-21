@@ -4,7 +4,7 @@ Plan: docs/superpowers/plans/2026-06-21-obsidian-ai-clipper-plan.md
 
 ## Tasks
 
-- [ ] Task 1: Project Scaffolding
+- [x] Task 1: Project Scaffolding (commits f37d16e..906e881, review clean)
 - [ ] Task 2: Configuration and Core Models
 - [ ] Task 3: URL Validation and Security Helpers
 - [ ] Task 4: SQLite Job Storage

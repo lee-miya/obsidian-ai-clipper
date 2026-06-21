@@ -20,16 +20,17 @@ Personal AI-powered web clipper for Obsidian Vaults.
 
 ## Development
 
-Install locally in editable mode:
+Create and sync the Python environment with uv:
 
 ```bash
-pip install -e ".[dev]"
+uv sync
 ```
 
-Run tests:
+Run commands inside the managed environment:
 
 ```bash
-pytest
+uv run pytest
+uv run uvicorn src.main:app --host 0.0.0.0 --port 8000
 ```
 
 ## Environment Variables
