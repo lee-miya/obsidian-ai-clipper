@@ -2,8 +2,9 @@ import json
 import os
 from typing import Any
 
+from pydantic import Field
 from pydantic.fields import FieldInfo
-from pydantic_settings import BaseSettings, SettingsConfigDict, EnvSettingsSource, PydanticBaseSettingsSource
+from pydantic_settings import BaseSettings, SettingsConfigDict, EnvSettingsSource, DotEnvSettingsSource, PydanticBaseSettingsSource
 
 
 class CommaSeparatedEnvSource(EnvSettingsSource):
@@ -15,11 +16,20 @@ class CommaSeparatedEnvSource(EnvSettingsSource):
         return super().prepare_field_value(field_name, field, value, value_is_complex)
 
 
+class CommaSeparatedDotEnvSource(DotEnvSettingsSource):
+    def prepare_field_value(
+        self, field_name: str, field: FieldInfo, value: Any, value_is_complex: bool
+    ) -> Any:
+        if field_name == 'api_keys' and isinstance(value, str):
+            return [key.strip() for key in value.split(',')]
+        return super().prepare_field_value(field_name, field, value, value_is_complex)
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
-    api_keys: list[str]
-    kimi_api_key: str
+    api_keys: list[str] = Field(default_factory=list)
+    kimi_api_key: str = Field(default="")
     kimi_model: str = "kimi-k2.6"
     vault_path: str = "/data/vault"
     database_path: str = "/data/clipper.db"
@@ -40,6 +50,6 @@ class Settings(BaseSettings):
         return (
             init_settings,
             CommaSeparatedEnvSource(settings_cls),
-            dotenv_settings,
+            CommaSeparatedDotEnvSource(settings_cls),
             file_secret_settings,
         )
