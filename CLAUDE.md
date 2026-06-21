@@ -38,29 +38,43 @@ Extension POST /api/clip → Auth + rate limit → validate_public_url → persi
 → Vault path: Clips/<category>/<date>-<slug>/index.md
 ```
 
-**Key modules and their responsibilities:**
+## Service
 
-| Module | Responsibility |
-|--------|---------------|
-| `src/config.py` | Pydantic-settings with custom `CommaSeparatedEnvSource` for comma-delimited `API_KEYS`. Fields default to empty/false so tests can construct `Settings()` without a `.env` file. |
-| `src/core/storage.py` | `JobStore` — async SQLite CRUD via `aiosqlite`. Each job has status, stage, retry_count, intermediates. No deletion — failed jobs persist forever. |
-| `src/fetcher/fetcher.py` | `fetch_html()` — tries `StaticFetcher` (httpx, 180s timeout), falls back to `DynamicFetcher` (Playwright headless Chromium) on `httpx` errors only. |
-| `src/extractor/extractor.py` | `extract()` — trafilatura for body text, BeautifulSoup for images/code blocks/title fallback. Returns `ExtractedContent` dataclass. |
-| `src/ai/kimi_client.py` | `KimiClient.process()` — calls Kimi Code API (`api.kimi.com/coding/v1`). Model default: `kimi-for-coding`. Base URL configurable via `KIMI_BASE_URL`. No `response_format` param. Retries HTTP errors 3× with exponential backoff, extracts JSON from markdown fences if needed. Raises `KimiAPIError` on terminal failure. |
-| `src/writer/vault_writer.py` | `save_clip()` — generates YAML frontmatter via `yaml.safe_dump`, downloads images, writes atomically (tmp file + rename), handles directory collisions. |
-| `src/worker/worker.py` | `process_job()` — orchestrates the full pipeline. AI retry exhaustion → saves fallback content, marks `needs_review`. `CancelledError` re-raised at both retry and outer levels. Outer fatal errors → retry (status → pending) or final FAILED. **The module-level `settings = Settings()` reads env at import time; tests work around this with `monkeypatch.setenv`.** |
-| `src/api/routes.py` | `POST /api/clip` (returns 202 + job_id, spawns background `asyncio.create_task`), `GET /api/jobs/{id}`. Both require `require_api_key` dep. |
-| `src/api/deps.py` | `require_api_key` — verifies Bearer token, then applies rolling-window rate limits (IP: 10/60s, global: 100/60s). In-memory, resets on restart. |
-| `src/main.py` | FastAPI app factory — mounts both API and Web routers, adds security headers middleware (X-Content-Type-Options, X-Frame-Options, CSP). |
-| `src/web/routes.py` | Jinja2 HTML pages: `/web` (list), `/web/clips/{id}` (detail), `/web/failed`, `/web/queue`. |
-| `src/utils/url.py` | `validate_public_url()` — rejects non-http/https, localhost, private IPs (IPv4+IPv6). |
-| `src/core/security.py` | `verify_api_key()` — checks `Bearer <key>` against allowed list. |
+- **`src/config.py`** — `Settings` (pydantic-settings). Comma-separated `API_KEYS` parsed via custom `CommaSeparatedEnvSource`. Fields default to empty so tests can construct without `.env`.
+- **`src/main.py`** — FastAPI app, mounts `api_router` + `web_router`, adds security headers middleware.
+- **`src/core/models.py`** — `JobStatus` enum, `ClipRequest`/`ClipResponse`/`JobResponse` (Pydantic). `JobResponse` allows extras for SQLite dict passthrough.
+- **`src/core/storage.py`** — `JobStore` (async SQLite via `aiosqlite`). CRUD, index on status. No delete — failed jobs persist.
+- **`src/core/security.py`** — `verify_api_key()` checks `Bearer <key>`.
 
-**Chrome extension** (`chrome-extension/`): Manifest V3, popup that POSTs `tab.url` to `/api/clip`, options page for server URL + API key stored in `chrome.storage.sync`. See `chrome-extension/GUIDE.md` for installation and usage.
+## API
 
-**Deployment** (`scripts/deploy.sh`): Interactive bash script for Rocky Linux 9.5. Auto-generates API key, installs Docker, configures Traefik + Let's Encrypt TLS, offers optional p12 export. See `README.md` for quick start.
+- **`src/api/deps.py`** — `require_api_key` dependency: verifies Bearer token, then rolling-window rate limits (IP 10/60s, global 100/60s). In-memory, resets on restart.
+- **`src/api/routes.py`** — `POST /api/clip` (202 + job_id, spawns `asyncio.create_task`), `GET /api/jobs/{id}`.
+- **`src/utils/url.py`** — `validate_public_url()` rejects non-http/https, localhost, private IPs (IPv4+IPv6).
 
-**Prompt template:** `prompts/clip.md` — the system prompt Kimi receives. Instructs structured JSON output with title, category, tags, summary, content_markdown, author, published_at.
+## Processing Pipeline
+
+- **`src/fetcher/`** — `fetch_html()` tries `StaticFetcher` (httpx, 180s), falls back to `DynamicFetcher` (Playwright Chromium) on httpx errors only.
+- **`src/extractor/extractor.py`** — `extract()` uses trafilatura (body) + BeautifulSoup (images, code blocks, title fallback). Returns `ExtractedContent` dataclass.
+- **`src/ai/kimi_client.py`** — `KimiClient.process()` calls `api.kimi.com/coding/v1`, model `kimi-for-coding`. No `response_format`. Retries HTTP errors 3× with exponential backoff, strips markdown fences from JSON responses. Raises `KimiAPIError` on terminal failure.
+- **`src/writer/vault_writer.py`** — `save_clip()` generates YAML frontmatter via `yaml.safe_dump`, downloads images to clip dir, atomic write (tmp + rename), collision handling.
+- **`src/worker/worker.py`** — `process_job()` orchestrates the full pipeline. AI exhaustion → fallback content saved as `needs_review`. `CancelledError` re-raised at both retry and outer levels. Fatal errors → retry (pending) or FAILED.
+
+## Web UI
+
+- **`src/web/routes.py`** — Jinja2 pages: `/web` (list), `/web/clips/{id}` (detail), `/web/failed`, `/web/queue`.
+- **`src/web/templates/`** — `base.html` (layout with nav + CSS variables), `list.html`, `detail.html`, `failed.html`, `queue.html`.
+
+## Chrome Extension
+
+- **`chrome-extension/`** — Manifest V3. Popup POSTs `tab.url` to `/api/clip`. Options page stores server URL + API key in `chrome.storage.sync`. Guide in `chrome-extension/GUIDE.md`.
+
+## Deployment
+
+- **`scripts/deploy.sh`** — Rocky Linux 9.5. Auto-generates API key, installs Docker + compose plugin, Traefik + Let's Encrypt (TLS-ALPN), p12 export option.
+- **`scripts/generate_icon.py`** — Renders the extension icon (256px supersampled → 128px).
+- **`Dockerfile`** — uv-based build, Playwright + Chromium, non-root user.
+- **`prompts/clip.md`** — Kimi system prompt for structured JSON extraction.
 
 ## Testing
 
