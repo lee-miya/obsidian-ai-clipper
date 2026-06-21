@@ -10,7 +10,7 @@ async def test_process_job_success(tmp_path, monkeypatch, respx_mock):
     await store.init()
 
     respx_mock.get("https://example.com").respond(200, text="<html><head><title>T</title></head><body><p>Hello world, this is a longer content that should pass the 50 character minimum threshold for processing. It needs to be at least fifty characters long to avoid the needs_review status.</p></body></html>")
-    respx_mock.post("https://api.moonshot.cn/v1/chat/completions").respond(json={
+    respx_mock.post("https://api.kimi.com/coding/v1/chat/completions").respond(json={
         "choices": [{"message": {"content": '{"title":"T","category":"未分类","tags":[],"summary":"S","content_markdown":"Hello","author":"","published_at":""}'}}]
     })
 
@@ -61,7 +61,7 @@ async def test_process_job_ai_retry_exhaustion(tmp_path, monkeypatch, respx_mock
     await store.init()
 
     respx_mock.get("https://example.com").respond(200, text="<html><head><title>T</title></head><body><p>Hello world, this is a longer content that should pass the 50 character minimum threshold for processing. It needs to be at least fifty characters long to avoid the needs_review status.</p></body></html>")
-    respx_mock.post("https://api.moonshot.cn/v1/chat/completions").respond(500)
+    respx_mock.post("https://api.kimi.com/coding/v1/chat/completions").respond(500)
 
     monkeypatch.setenv("VAULT_PATH", str(tmp_path / "vault"))
     monkeypatch.setenv("KIMI_API_KEY", "test-kimi-key")

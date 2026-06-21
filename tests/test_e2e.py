@@ -35,7 +35,7 @@ def test_create_clip(client, respx_mock):
     respx_mock.get("https://example.com/e2e").respond(
         200, text="<html><title>E2E</title><body>Content</body></html>"
     )
-    respx_mock.post("https://api.moonshot.cn/v1/chat/completions").respond(
+    respx_mock.post("https://api.kimi.com/coding/v1/chat/completions").respond(
         json={
             "choices": [
                 {

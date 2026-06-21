@@ -30,7 +30,8 @@ class Settings(BaseSettings):
 
     api_keys: list[str] = Field(default_factory=list)
     kimi_api_key: str = Field(default="")
-    kimi_model: str = "kimi-k2.6"
+    kimi_base_url: str = "https://api.kimi.com/coding/v1"
+    kimi_model: str = "kimi-for-coding"
     vault_path: str = "/data/vault"
     database_path: str = "/data/clipper.db"
     log_level: str = "INFO"

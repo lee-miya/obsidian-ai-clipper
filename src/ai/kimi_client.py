@@ -6,10 +6,10 @@ class KimiAPIError(Exception):
     pass
 
 class KimiClient:
-    def __init__(self, api_key: str, model: str = "kimi-k2.6"):
+    def __init__(self, api_key: str, base_url: str = "https://api.kimi.com/coding/v1", model: str = "kimi-for-coding"):
         self.api_key = api_key
+        self.base_url = base_url
         self.model = model
-        self.base_url = "https://api.moonshot.cn/v1"
 
     async def process(self, content: ExtractedContent, url: str) -> dict:
         with open("prompts/clip.md", encoding="utf-8") as f:

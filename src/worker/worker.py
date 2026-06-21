@@ -53,7 +53,7 @@ async def process_job(job_id: str, store: JobStore):
             return
 
         await store.update_status(job_id, JobStatus.AI_PROCESSING, stage="ai_processing", extracted_json_path=extracted_json_path)
-        client = KimiClient(api_key=settings.kimi_api_key, model=settings.kimi_model)
+        client = KimiClient(api_key=settings.kimi_api_key, base_url=settings.kimi_base_url, model=settings.kimi_model)
 
         last_error = None
         for attempt in range(settings.max_retry):

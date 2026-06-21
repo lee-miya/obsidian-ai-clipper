@@ -1,0 +1,14 @@
+.git
+.gitignore
+.env
+.env.example
+.venv
+__pycache__
+*.pyc
+.pytest_cache
+tests
+.superpowers
+*.md
+Dockerfile
+.dockerignore
+node_modules

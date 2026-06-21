@@ -34,7 +34,7 @@ A monolithic FastAPI service that receives URLs from a Chrome extension, fetches
 ```
 Extension POST /api/clip → Auth + rate limit → validate_public_url → persist to SQLite
 → background asyncio task: fetch_html (httpx → Playwright fallback) → trafilatura+BS4 extract
-→ KimiClient.process (Moonshot API) → save_clip (Markdown + YAML frontmatter + image download)
+→ KimiClient.process (Kimi Code API: api.kimi.com/coding/v1) → save_clip (Markdown + YAML frontmatter + image download)
 → Vault path: Clips/<category>/<date>-<slug>/index.md
 ```
 
@@ -46,7 +46,7 @@ Extension POST /api/clip → Auth + rate limit → validate_public_url → persi
 | `src/core/storage.py` | `JobStore` — async SQLite CRUD via `aiosqlite`. Each job has status, stage, retry_count, intermediates. No deletion — failed jobs persist forever. |
 | `src/fetcher/fetcher.py` | `fetch_html()` — tries `StaticFetcher` (httpx, 180s timeout), falls back to `DynamicFetcher` (Playwright headless Chromium) on `httpx` errors only. |
 | `src/extractor/extractor.py` | `extract()` — trafilatura for body text, BeautifulSoup for images/code blocks/title fallback. Returns `ExtractedContent` dataclass. |
-| `src/ai/kimi_client.py` | `KimiClient.process()` — calls Moonshot API (`api.moonshot.cn/v1`). Model default: `kimi-k2.6`. No `response_format` param (Moonshot rejects it). Retries HTTP errors 3× with exponential backoff, extracts JSON from markdown fences if needed. Raises `KimiAPIError` on terminal failure. |
+| `src/ai/kimi_client.py` | `KimiClient.process()` — calls Kimi Code API (`api.kimi.com/coding/v1`). Model default: `kimi-for-coding`. Base URL configurable via `KIMI_BASE_URL`. No `response_format` param. Retries HTTP errors 3× with exponential backoff, extracts JSON from markdown fences if needed. Raises `KimiAPIError` on terminal failure. |
 | `src/writer/vault_writer.py` | `save_clip()` — generates YAML frontmatter via `yaml.safe_dump`, downloads images, writes atomically (tmp file + rename), handles directory collisions. |
 | `src/worker/worker.py` | `process_job()` — orchestrates the full pipeline. AI retry exhaustion → saves fallback content, marks `needs_review`. `CancelledError` re-raised at both retry and outer levels. Outer fatal errors → retry (status → pending) or final FAILED. **The module-level `settings = Settings()` reads env at import time; tests work around this with `monkeypatch.setenv`.** |
 | `src/api/routes.py` | `POST /api/clip` (returns 202 + job_id, spawns background `asyncio.create_task`), `GET /api/jobs/{id}`. Both require `require_api_key` dep. |
@@ -66,7 +66,7 @@ All tests use `pytest-asyncio` (`asyncio_mode = "auto"`). HTTP mocking via `resp
 
 Common test patterns:
 - `respx_mock.get(...).respond(...)` for fetcher/web requests
-- `respx_mock.post("https://api.moonshot.cn/v1/chat/completions").respond(...)` for AI
+- `respx_mock.post("https://api.kimi.com/coding/v1/chat/completions").respond(...)` for AI and worker tests
 - `monkeypatch.setenv("VAULT_PATH", ...)` for worker tests
 - `TestClient(app)` for API/web tests after monkeypatching `routes.settings` and `routes.store`
 

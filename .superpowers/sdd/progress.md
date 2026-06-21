@@ -13,10 +13,10 @@ Plan: docs/superpowers/plans/2026-06-21-obsidian-ai-clipper-plan.md
 - [x] Task 7: Kimi Code AI Client (commits 7bedfd1..0d29b9d, review clean)
 - [x] Task 8: Vault Writer (commits 0d29b9d..38e5177, review clean)
 - [x] Task 9: Background Worker (commits 38e5177..HEAD, review clean)
-- [ ] Task 10: FastAPI API Routes
-- [ ] Task 11: Web UI Routes and Templates
-- [ ] Task 12: Rate Limiting and Security Headers
-- [ ] Task 13: Chrome Extension
-- [ ] Task 14: HTTPS / TLS Configuration
-- [ ] Task 15: Integration and End-to-End Test
-- [ ] Task 16: Final Integration and Docker Build
+- [x] Task 10: FastAPI API Routes (commits fca11d6..b973af5, review clean)
+- [x] Task 11: Web UI Routes and Templates (commits b973af5..9f1d905, review clean)
+- [x] Task 12: Rate Limiting and Security Headers (commits 9f1d905..2b1fb55, review clean)
+- [x] Task 13: Chrome Extension (commit 8dc5ff3, review clean)
+- [x] Task 14: HTTPS / TLS Configuration (commit after 8dc5ff3, review clean)
+- [x] Task 15: Integration and End-to-End Test (commit 91ce33a, review clean)
+- [x] Task 16: Final Integration and Docker Build
