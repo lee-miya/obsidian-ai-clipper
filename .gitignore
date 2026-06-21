@@ -10,3 +10,10 @@ __pycache__/
 .ruff_cache/
 data/
 letsencrypt/
+test-vault/
+*.p12
+*.pem
+*.key
+*.crt
+.DS_Store
+Thumbs.db
