@@ -1,9 +1,13 @@
 import re
+import logging
+import yaml
 import httpx
 from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import urlparse
 from src.extractor.extractor import ExtractedContent
+
+logger = logging.getLogger(__name__)
 
 SLUG_MAX = 60
 
@@ -13,15 +17,15 @@ def safe_filename(name: str) -> str:
     return name[:SLUG_MAX]
 
 
-async def download_image(url: str, dest: Path) -> str:
+async def download_image(url: str, clip_dir: Path, idx: int) -> str:
     async with httpx.AsyncClient(timeout=60.0) as client:
         response = await client.get(url)
         response.raise_for_status()
         ext = response.headers.get("content-type", "").split("/")[-1]
         if not ext or ext not in {"png", "jpg", "jpeg", "gif", "webp", "svg"}:
             ext = "png"
-        filename = f"image_{dest.parent.name}_{dest.name}.{ext}"
-        image_path = dest.parent / filename
+        filename = f"image_{idx}.{ext}"
+        image_path = clip_dir / filename
         image_path.write_bytes(response.content)
         return filename
 
@@ -53,33 +57,31 @@ async def save_clip(
     image_map = {}
     for idx, img in enumerate(extracted.images):
         try:
-            filename = await download_image(img["src"], clip_dir / f"img_{idx}")
+            filename = await download_image(img["src"], clip_dir, idx)
             image_map[img["src"]] = filename
-        except Exception:
+        except Exception as e:
+            logger.warning("Failed to download image %s: %s", img["src"], e)
             image_map[img["src"]] = img["src"]
 
     for original, replacement in image_map.items():
         md_content = md_content.replace(original, replacement)
 
-    frontmatter = f"""---
-title: "{title}"
-source_url: "{url}"
-domain: "{urlparse(url).netloc}"
-category: "{category}"
-tags:
-{chr(10).join(f'  - "{t}"' for t in ai_result.get('tags', []))}
-summary: "{ai_result.get('summary', '')}"
-author: "{ai_result.get('author', '')}"
-published_at: "{ai_result.get('published_at', '')}"
-clipped_at: "{datetime.now(timezone.utc).isoformat()}"
-job_id: "{job_id}"
-status: "done"
----
-
-{md_content}
-"""
+    frontmatter_dict = {
+        "title": title,
+        "source_url": url,
+        "domain": urlparse(url).netloc,
+        "category": category,
+        "tags": ai_result.get("tags", []),
+        "summary": ai_result.get("summary", ""),
+        "author": ai_result.get("author", ""),
+        "published_at": ai_result.get("published_at", ""),
+        "clipped_at": datetime.now(timezone.utc).isoformat(),
+        "job_id": job_id,
+        "status": "done",
+    }
+    frontmatter = "---\n" + yaml.safe_dump(frontmatter_dict, allow_unicode=True, sort_keys=False) + "---\n\n"
 
     temp_path = clip_dir / ".index.md.tmp"
-    temp_path.write_text(frontmatter, encoding="utf-8")
+    temp_path.write_text(frontmatter + md_content, encoding="utf-8")
     temp_path.replace(index_path)
     return index_path
