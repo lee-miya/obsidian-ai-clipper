@@ -56,7 +56,9 @@ Extension POST /api/clip → Auth + rate limit → validate_public_url → persi
 | `src/utils/url.py` | `validate_public_url()` — rejects non-http/https, localhost, private IPs (IPv4+IPv6). |
 | `src/core/security.py` | `verify_api_key()` — checks `Bearer <key>` against allowed list. |
 
-**Chrome extension** (`chrome-extension/`): Manifest V3, popup that POSTs `tab.url` to `/api/clip`, options page for server URL + API key stored in `chrome.storage.sync`.
+**Chrome extension** (`chrome-extension/`): Manifest V3, popup that POSTs `tab.url` to `/api/clip`, options page for server URL + API key stored in `chrome.storage.sync`. See `chrome-extension/GUIDE.md` for installation and usage.
+
+**Deployment** (`scripts/deploy.sh`): Interactive bash script for Rocky Linux 9.5. Auto-generates API key, installs Docker, configures Traefik + Let's Encrypt TLS, offers optional p12 export. See `README.md` for quick start.
 
 **Prompt template:** `prompts/clip.md` — the system prompt Kimi receives. Instructs structured JSON output with title, category, tags, summary, content_markdown, author, published_at.
 
